@@ -2,13 +2,9 @@ from PyQt6 import *
 from PyQt6.QtGui import *
 from PyQt6.QtCore import *
 from PyQt6.QtWidgets import *
-import json
 import pickle
 
-#global variables
-vec1, vec2, lineColor = [], [], []
-lastSave = 0
-color = "Black"
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -21,6 +17,13 @@ class MainWindow(QMainWindow):
         #vec1 and vec2 of the current line
         self.__vec1 = QPoint()
         self.__vec2 = QPoint()
+
+        #save variables
+        self.vec1 = []
+        self.vec2 = []
+        self.lineColor = []
+        self.lastSave = 0
+        self.color = "Black"
 
         self.__path = None
         self.menuBar().setNativeMenuBar(False)
@@ -66,8 +69,10 @@ class MainWindow(QMainWindow):
 
 
     def onNew(self):
-        global vec1, vec2, lineColor, lastSave
-        vec1, vec2, lineColor, lastSave = [], [], [], 0
+        self.vec1 = []
+        self.vec2 = []
+        self.lineColor = []
+        self.lastSave = 0
 
 
     def onOpen(self):
@@ -81,39 +86,36 @@ class MainWindow(QMainWindow):
             with open(self.__path, "rb") as f:
                 saveArray = pickle.load(f)    #converts the json on the file back into an array/list
                 f.close()
-            global vec1, vec2, lineColor, lastSave
-            vec1 = saveArray[0]
-            vec2 = saveArray[1]
-            lineColor = saveArray[2]
-            lastSave = len(vec1)
+            self.vec1 = saveArray[0]
+            self.vec2 = saveArray[1]
+            self.lineColor = saveArray[2]
+            self.lastSave = len(self.vec1)
             QMessageBox.about(self, "Path", "Opened")
 
     def onSave(self):
-        global vec1, vec2, lineColor, lastSave
         if self.__path:
-            saveArray = [vec1, vec2, lineColor]
+            saveArray = [self.vec1, self.vec2, self.lineColor]
             #opens/creates the file on the path
             with open(self.__path, "wb") as f:
                 pickle.dump(saveArray, f)     #converts the data from the drawing into json
                 f.close()
-            lastSave = len(vec1)
+            self.lastSave = len(self.vec1)
             QMessageBox.about(self, "Path", "Saved")
         else:
             QMessageBox.about(self, "Error", "Please create a save file first")
 
     def onSaveAs(self):
-        global vec1, vec2, lineColor, lastSave
         (path, _) = QFileDialog.getSaveFileName \
             (self, "Save File", self.__path, \
             "Draw files (*.drw)")
         if path:
             self.__path = path
-            saveArray = [vec1, vec2, lineColor]
+            saveArray = [self.vec1, self.vec2, self.lineColor]
             #opens/creates the file on the path
             with open(self.__path, "wb") as f:
                 pickle.dump(saveArray, f)     #converts the data from the drawing into json
                 f.close()
-            lastSave = len(vec1)
+            self.lastSave = len(self.vec1)
             QMessageBox.about(self, "Path", "Saved")
 
     def onExit(self):
@@ -122,11 +124,10 @@ class MainWindow(QMainWindow):
             application.exit(0) # The application quits.
 
     def closeEvent(self, event):
-        global vec1, lastSave
         if QMessageBox.question \
                 (self, "Quit", "Do you want to quit") == \
                 QMessageBox.StandardButton.Yes:
-            if lastSave != len(vec1):
+            if self.lastSave != len(self.vec1):
                 if QMessageBox.question \
                         (self, "Unsaved work", "do you want to save") == \
                         QMessageBox.StandardButton.Yes:
@@ -141,20 +142,16 @@ class MainWindow(QMainWindow):
             event.ignore()
 
     def onRed(self):
-        global color
-        color = "Red"
+        self.color = "Red"
 
     def onGreen(self):
-        global color
-        color = "Green"
+        self.color = "Green"
 
     def onBlue(self):
-        global color
-        color = "Blue"
+        self.color = "Blue"
 
     def onBlack(self):
-        global color
-        color = "Black"
+        self.color = "Black"
 
     def mousePressEvent(self, event):
         if event.buttons() == Qt.MouseButton.LeftButton:
@@ -171,32 +168,30 @@ class MainWindow(QMainWindow):
         self.update()
 
     def mouseReleaseEvent(self, event):
-        global vec1, vec2, lineColor, color
         if self.__leftMouseButtonDown:
             self.__leftMouseButtonDown = False
         
-        vec1.append(self.__vec1)
-        vec2.append(self.__vec2)
-        lineColor.append(color)
+        self.vec1.append(self.__vec1)
+        self.vec2.append(self.__vec2)
+        self.lineColor.append(self.color)
 
     def paintEvent(self, _):
-        global vec1, vec2, lineColor, lastSave, title, color
         qPainter = QPainter(self)
-        qPen = QPen(QColor(color))
+        qPen = QPen(QColor(self.color))
         qPen.setStyle(Qt.PenStyle.DashLine)
         qPainter.setPen(qPen)
 
         qPainter.drawLine(QLine(self.__vec1, self.__vec2))
         
-        for i in range(len(vec1)):
-            qPen = QPen(QColor(lineColor[i]))
+        for i in range(len(self.vec1)):
+            qPen = QPen(QColor(self.lineColor[i]))
             qPen.setStyle(Qt.PenStyle.DashLine)
             qPainter.setPen(qPen)
 
-            qPainter.drawLine(vec1[i], \
-            vec2[i])
+            qPainter.drawLine(self.vec1[i], \
+            self.vec2[i])
 
-        if lastSave != len(vec1):
+        if self.lastSave != len(self.vec1):
             self.setWindowTitle("niki paint*")
         else:
             self.setWindowTitle("niki paint")
