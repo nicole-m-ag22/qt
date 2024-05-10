@@ -119,9 +119,19 @@ class MainWindow(QMainWindow):
             QMessageBox.about(self, "Path", "Saved")
 
     def onExit(self):
-        if QMessageBox.question(self, "Quit", "Do you want to quit") == \
+        if QMessageBox.question \
+                (self, "Quit", "Do you want to quit") == \
                 QMessageBox.StandardButton.Yes:
-            application.exit(0) # The application quits.
+            if self.lastSave != len(self.vec1):
+                if QMessageBox.question \
+                        (self, "Unsaved work", "do you want to save") == \
+                        QMessageBox.StandardButton.Yes:
+                    self.onSaveAs()
+                else:
+                    application.exit(0)
+            else:
+                # The window closes, and the application quits.
+                application.exit(0)
 
     def closeEvent(self, event):
         if QMessageBox.question \
